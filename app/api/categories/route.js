@@ -10,7 +10,7 @@ export async function GET() {
 
 export async function POST(req) {
   await dbConnect();
-  const user = getUserFromRequest(req);
+  const user = await  getUserFromRequest(req);
   if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }

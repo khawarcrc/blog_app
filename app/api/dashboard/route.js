@@ -1,10 +1,12 @@
 import { getUserFromRequest } from '@/middleware/auth';
+import { NextResponse } from 'next/server';
 
 export async function GET(req) {
-  const user = getUserFromRequest(req);
+  const user = await getUserFromRequest(req);
   if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  // Return dashboard data here
-  return Response.json({ message: 'Welcome to the admin dashboard', user });
+
+  // Proceed with your dashboard logic
+  return NextResponse.json({ message: 'Welcome to dashboard', user });
 }

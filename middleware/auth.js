@@ -1,8 +1,16 @@
+import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth';
 
-export function getUserFromRequest(req) {
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader) return null;
-  const token = authHeader.split(' ')[1];
-  return verifyToken(token);
+export async function getUserFromRequest(req) {
+  try {
+    const cookieStore = await cookies(); // ✅ Fix here
+    const token = cookieStore.get('token')?.value;
+    if (!token) return null;
+
+    const user = verifyToken(token); // or await if verifyToken is async
+    return user;
+  } catch (err) {
+    console.error('Error in getUserFromRequest:', err);
+    return null;
+  }
 }
