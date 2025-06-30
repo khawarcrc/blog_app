@@ -33,7 +33,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-black px-4">
+    <main className="flex min-h-screen items-center justify-center dark:from-gray-900 dark:via-gray-800 dark:to-black ">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
