@@ -1,20 +1,19 @@
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Post from "@/models/Post";
 import Category from "@/models/Category";
 import { getUserFromRequest } from "@/middleware/auth";
-import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// ✅ Handle GET requests to fetch all posts
+// ✅ GET all posts
 export async function GET() {
   try {
     await dbConnect();
-
     const posts = await Post.find()
-      .sort({ createdAt: -1 }) // newest first
-      .populate("category", "name") // populate category name only
-      .populate("author", "username"); // populate author username only if needed
+      .sort({ createdAt: -1 })
+      .populate("category", "name")
+      .populate("author", "username");
 
     return NextResponse.json({ posts });
   } catch (err) {
@@ -23,13 +22,14 @@ export async function GET() {
   }
 }
 
-// ✅ Your existing POST method remains unchanged
+// ✅ POST a new post
 export async function POST(req: Request) {
   try {
     await dbConnect();
     const user = await getUserFromRequest(req);
+    console.log("👤 USER FROM REQUEST:", user);
 
-    if (!user || (user.role !== "admin" && user.role !== "superadmin")) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -97,6 +97,85 @@ export async function POST(req: Request) {
     );
   } catch (err) {
     console.error("POST /api/posts error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+// ✅ PUT (Update a post)
+export async function PUT(req: Request) {
+  try {
+    await dbConnect();
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { postId, title, content, categoryId } = await req.json();
+
+    if (!postId || !title || !content || !categoryId) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (post.author.toString() !== user.userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+
+    post.title = title;
+    post.content = content;
+    post.category = categoryId;
+    await post.save();
+
+    return NextResponse.json({ message: "Post updated", post });
+  } catch (err) {
+    console.error("PUT /api/posts error:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+// ✅ DELETE a post
+export async function DELETE(req: Request) {
+  try {
+    await dbConnect();
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { postId } = await req.json();
+
+    if (!postId) {
+      return NextResponse.json({ error: "Post ID is required" }, { status: 400 });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    if (post.author.toString() !== user.userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await Post.findByIdAndDelete(postId);
+
+    return NextResponse.json({ message: "Post deleted" });
+  } catch (err) {
+    console.error("DELETE /api/posts error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
