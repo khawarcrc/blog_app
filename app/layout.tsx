@@ -28,8 +28,8 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-gradient-to-br
-         from-sky-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-gray-950 dark:to-black
-          text-gray-800 dark:text-gray-100`}
+   from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-950
+   text-gray-800 dark:text-gray-200`}
       >
         <Header />
         <main className="min-h-screen">{children}</main>
