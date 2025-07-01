@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function GET(req) {
   const user = await getUserFromRequest(req);
-  if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Proceed with your dashboard logic
+  // Send user info (including role) to the frontend
   return NextResponse.json({ message: 'Welcome to dashboard', user });
 }

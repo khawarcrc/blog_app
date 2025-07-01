@@ -1,16 +1,18 @@
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth';
+// middleware/auth.ts
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth";
 
-export async function getUserFromRequest(req) {
-  try {
-    const cookieStore = await cookies(); // ✅ Fix here
-    const token = cookieStore.get('token')?.value;
-    if (!token) return null;
+export async function getUserFromRequest(_req: Request) {
+  const cookieStore = await cookies(); 
+  const token = cookieStore.get("token")?.value;
 
-    const user = verifyToken(token); // or await if verifyToken is async
-    return user;
-  } catch (err) {
-    console.error('Error in getUserFromRequest:', err);
+  if (!token) return null;
+
+  const user = verifyToken(token);
+  if (!user) {
+    console.error("Invalid or expired token.");
     return null;
   }
+
+  return user;
 }

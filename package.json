@@ -59,6 +59,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.2",
     "@types/react": "^18.3.23",
     "autoprefixer": "^10.4.21",
