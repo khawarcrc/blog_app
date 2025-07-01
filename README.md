@@ -34,3 +34,84 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+my-blog-app/
+├── .env
+├── .gitignore
+├── @/
+│   └── components/
+│       └── ui/
+│           └── sonner.jsx
+├── app/
+│   ├── about/
+│   │   └── page.tsx
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── login/
+│   │   │   │   └── route.ts
+│   │   │   ├── logout/
+│   │   │   │   └── route.ts
+│   │   │   ├── me/
+│   │   │   │   └── route.ts
+│   │   │   └── register/
+│   │   │       └── route.ts
+│   │   ├── categories/
+│   │   │   └── route.ts
+│   │   ├── dashboard/
+│   │   │   └── route.ts
+│   │   ├── posts/
+│   │   │   └── route.ts
+│   │   └── test-db/
+│   │       └── route.ts
+│   ├── dashboard/
+│   │   ├── categories/
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── posts/
+│   │       └── page.tsx
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── login/
+│   │   └── page.tsx
+│   ├── page.tsx
+│   └── register/
+│       └── page.tsx
+├── components.json
+├── eslint.config.mjs
+├── hooks/
+│   └── use-mobile.ts
+├── lib/
+│   ├── auth.ts
+│   ├── dbConnect.ts
+│   └── utils.ts
+├── middleware/
+│   └── auth.ts
+├── models/
+│   ├── Category.ts
+│   ├── Post.ts
+│   └── User.ts
+├── next-env.d.ts
+├── next.config.mjs
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── postcss.config.ts
+├── public/
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── README.md
+├── tailwind.config.ts
+├── tsconfig.json
+├── types/
+│   ├── api.ts
+│   ├── category.ts
+│   ├── index.ts
+│   ├── jwt.ts
+│   ├── post.ts
+│   └── user.ts
