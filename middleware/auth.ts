@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 
 export async function getUserFromRequest(_req: Request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
   console.log("🧪 TOKEN FROM COOKIE:", token);
