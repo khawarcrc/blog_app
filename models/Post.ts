@@ -12,6 +12,7 @@ const PostSchema = new mongoose.Schema(
     },
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
+    likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -21,6 +22,10 @@ const PostSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
+    },
+    subcategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: false,
     },
     tags: [{ type: String }],
     featured: { type: Boolean, default: false },
