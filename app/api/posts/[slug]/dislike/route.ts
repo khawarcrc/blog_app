@@ -1,4 +1,3 @@
-// File: app/api/posts/[slug]/like/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Post from "@/models/Post";
@@ -16,6 +15,7 @@ export async function POST(
   }
 
   const { slug } = params;
+  const userId = user.userId;
 
   try {
     const post = await Post.findOne({ slug });
@@ -24,24 +24,23 @@ export async function POST(
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    const userId = user.userId; // ✅ comes from JWT payload
-    const likedIndex = post.likedBy.findIndex(
+    const index = post.dislikedBy.findIndex(
       (id: any) => id.toString() === userId
     );
 
-    if (likedIndex === -1) {
-      post.likedBy.push(userId); // 👍 Like
+    if (index === -1) {
+      post.dislikedBy.push(userId);
     } else {
-      post.likedBy.splice(likedIndex, 1); // 👎 Dislike (remove like)
+      post.dislikedBy.splice(index, 1);
     }
 
-    post.likes = post.likedBy.length;
+    post.dislikes = post.dislikedBy.length;
     await post.save();
 
     return NextResponse.json({
-      message: likedIndex === -1 ? "Liked" : "Disliked",
-      likes: post.likes,
-      liked: likedIndex === -1,
+      message: index === -1 ? "Disliked" : "Undisliked",
+      dislikes: post.dislikes,
+      disliked: index === -1,
     });
   } catch (err) {
     console.error(err);
@@ -63,27 +62,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Find posts where userId is in likedBy array
-    const likedPosts = await Post.find({ likedBy: userId, status: "published" })
+    const dislikedPosts = await Post.find({
+      dislikedBy: userId,
+      status: "published",
+    })
       .populate("author", "username")
       .populate("category", "name subcategories")
       .sort({ createdAt: -1 })
       .lean();
 
-    const postsWithSub = likedPosts.map((post) => {
+    const postsWithSub = dislikedPosts.map((post) => {
       const sub = post?.category?.subcategories?.find(
         (s: any) => s._id.toString() === post.subcategory?.toString()
       );
       return {
         ...post,
-        liked: true, // since user already liked these
+        disliked: true,
         subcategoryName: sub?.name || null,
       };
     });
 
     return NextResponse.json({ posts: postsWithSub });
   } catch (err) {
-    console.error("GET /api/posts/liked error:", err);
+    console.error("GET /api/posts/disliked error:", err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
