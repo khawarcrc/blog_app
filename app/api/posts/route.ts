@@ -1,3 +1,4 @@
+// app/api/posts/route.ts
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Post from "@/models/Post";

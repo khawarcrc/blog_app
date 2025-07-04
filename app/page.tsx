@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PostWithAuthor, PostWithCategory } from "@/types/post";
+import { Heart, ThumbsDown } from "lucide-react";
 
 type PostType = PostWithAuthor &
   PostWithCategory & {
@@ -86,6 +87,37 @@ export default function HomePage() {
       console.error("Failed to like post:", err);
     }
   };
+  const handleDislike = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    slug: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const res = await fetch(`/api/posts/${slug}/dislike`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.slug === slug) {
+            return {
+              ...p,
+              dislikes: data.dislikes,
+              disliked: data.disliked,
+            } as PostType;
+          }
+          return p;
+        })
+      );
+    } catch (err) {
+      console.error("Failed to dislike post:", err);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
@@ -96,7 +128,8 @@ export default function HomePage() {
             Welcome to My Blog
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-            Discover powerful ideas, guides, and thought-provoking stories — from creators to creators.
+            Discover powerful ideas, guides, and thought-provoking stories —
+            from creators to creators.
           </p>
         </div>
       </section>
@@ -135,24 +168,36 @@ export default function HomePage() {
                         : "Unknown"}
                     </span>
                     <span className="italic">
-                      {typeof post.category === "object" && "name" in post.category
+                      {typeof post.category === "object" &&
+                      "name" in post.category
                         ? post.category.name
                         : "Uncategorized"}
-                      {post.subcategory?.name ? ` → ${post.subcategory.name}` : ""}
+                      {post.subcategory?.name
+                        ? ` → ${post.subcategory.name}`
+                        : ""}
                     </span>
                   </div>
                 </Link>
 
-                {/* ❤️ Like button */}
-                <div className="flex justify-between items-center text-sm text-gray-500 mt-2">
-                  <span>{post.likes || 0} ❤️</span>
+                <div className="flex justify-between items-center text-sm text-gray-500 mt-4 gap-3">
+                  {/* ❤️ Like */}
                   <button
                     onClick={(e) => handleLike(e, post.slug)}
-                    className={`mt-2 px-3 py-1 text-sm rounded ${
-                      post.liked ? "bg-red-600" : "bg-blue-600"
-                    } text-white`}
+                    className={`flex items-center gap-1 px-3 py-1 rounded text-white text-sm transition-all
+                              ${post.liked ? "bg-red-600" : "bg-blue-600"}`}
                   >
-                    {post.liked ? "Unlike" : "Like"} ({post.likes || 0})
+                    <Heart size={16} className="shrink-0" />
+                    {post.likes || 0}
+                  </button>
+
+                  {/* 👎 Dislike */}
+                  <button
+                    onClick={(e) => handleDislike(e, post.slug)}
+                    className={`flex items-center gap-1 px-3 py-1 rounded text-white text-sm transition-all
+                              ${post.disliked ? "bg-gray-700" : "bg-gray-500"}`}
+                  >
+                    <ThumbsDown size={16} className="shrink-0" />
+                    {post.dislikes || 0}
                   </button>
                 </div>
               </div>
