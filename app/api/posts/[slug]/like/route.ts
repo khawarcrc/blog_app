@@ -16,6 +16,7 @@ export async function POST(
   }
 
   const { slug } = params;
+  const userId = user.userId;
 
   try {
     const post = await Post.findOne({ slug });
@@ -24,31 +25,36 @@ export async function POST(
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    const userId = user.userId; // ✅ comes from JWT payload
-    const likedIndex = post.likedBy.findIndex(
-      (id: any) => id.toString() === userId
+    // Remove from dislikedBy if exists
+    const dislikeIndex = post.dislikedBy.findIndex(
+      (id) => id.toString() === userId
     );
+    if (dislikeIndex !== -1) {
+      post.dislikedBy.splice(dislikeIndex, 1);
+    }
 
-    if (likedIndex === -1) {
-      post.likedBy.push(userId); // 👍 Like
+    // Toggle like
+    const likeIndex = post.likedBy.findIndex((id) => id.toString() === userId);
+    if (likeIndex === -1) {
+      post.likedBy.push(userId); // 👍
     } else {
-      post.likedBy.splice(likedIndex, 1); // 👎 Dislike (remove like)
+      post.likedBy.splice(likeIndex, 1); // 👎
     }
 
     post.likes = post.likedBy.length;
+    post.dislikes = post.dislikedBy.length;
     await post.save();
 
     return NextResponse.json({
-      message: likedIndex === -1 ? "Liked" : "Disliked",
+      message: likeIndex === -1 ? "Liked" : "Unliked",
       likes: post.likes,
-      liked: likedIndex === -1,
+      dislikes: post.dislikes,
+      liked: likeIndex === -1,
+      disliked: false,
     });
   } catch (err) {
     console.error(err);
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
 
