@@ -78,6 +78,11 @@ export default function HomePage() {
               ...p,
               likes: data.likes,
               liked: data.liked,
+              // Reset dislike if now liked
+              dislikes: data.liked
+                ? Math.max((p.dislikes || 0) - 1, 0)
+                : p.dislikes,
+              disliked: data.liked ? false : p.disliked,
             } as PostType;
           }
           return p;
@@ -87,6 +92,7 @@ export default function HomePage() {
       console.error("Failed to like post:", err);
     }
   };
+
   const handleDislike = async (
     e: React.MouseEvent<HTMLButtonElement>,
     slug: string
@@ -109,6 +115,9 @@ export default function HomePage() {
               ...p,
               dislikes: data.dislikes,
               disliked: data.disliked,
+              // Reset like if now disliked
+              likes: data.disliked ? Math.max((p.likes || 0) - 1, 0) : p.likes,
+              liked: data.disliked ? false : p.liked,
             } as PostType;
           }
           return p;

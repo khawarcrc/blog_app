@@ -1,4 +1,4 @@
-// app/api/posts/[slug]/dislike/route.ts
+// File: app/api/posts/[slug]/dislike/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Post from "@/models/Post";
@@ -25,32 +25,37 @@ export async function POST(
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    const index = post.dislikedBy.findIndex(
-      (id: any) => id.toString() === userId
-    );
-
-    if (index === -1) {
-      post.dislikedBy.push(userId);
-    } else {
-      post.dislikedBy.splice(index, 1);
+    // Remove from likedBy if exists
+    const likeIndex = post.likedBy.findIndex(id => id.toString() === userId);
+    if (likeIndex !== -1) {
+      post.likedBy.splice(likeIndex, 1);
     }
 
+    // Toggle dislike
+    const dislikeIndex = post.dislikedBy.findIndex(id => id.toString() === userId);
+    if (dislikeIndex === -1) {
+      post.dislikedBy.push(userId); // 👎
+    } else {
+      post.dislikedBy.splice(dislikeIndex, 1); // undo 👎
+    }
+
+    post.likes = post.likedBy.length;
     post.dislikes = post.dislikedBy.length;
     await post.save();
 
     return NextResponse.json({
-      message: index === -1 ? "Disliked" : "Undisliked",
+      message: dislikeIndex === -1 ? "Disliked" : "Undisliked",
       dislikes: post.dislikes,
-      disliked: index === -1,
+      likes: post.likes,
+      disliked: dislikeIndex === -1,
+      liked: false,
     });
   } catch (err) {
     console.error(err);
-    return NextResponse.json(
-      { message: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
+
 
 export async function GET(req: NextRequest) {
   try {
