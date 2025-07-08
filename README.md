@@ -61,7 +61,11 @@ my-blog-app/
 │   │   ├── dashboard/
 │   │   │   └── route.ts
 │   │   ├── posts/
-│   │   │   └── route.ts
+│   │   │   ├── [slug]/
+│   │   │   │   ├── like/
+│   │   │   │   │   └── route.ts    
+│   │   │   │   └── dislike/
+│   │   │   │       └── route.ts    
 │   │   └── test-db/
 │   │       └── route.ts
 │   ├── dashboard/
