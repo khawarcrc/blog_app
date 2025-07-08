@@ -9,23 +9,37 @@ import { toast } from "sonner";
 
 export default function AllPosts() {
   const [posts, setPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [editingPostId, setEditingPostId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingCategory, setEditingCategory] = useState("");
   const [editingSubcategory, setEditingSubcategory] = useState("");
   const [editingStatus, setEditingStatus] = useState("draft");
   const [editingContent, setEditingContent] = useState("");
-  const [categories, setCategories] = useState([]);
+
+  // showMode: "all" | "liked" | "disliked"
+  const [showMode, setShowMode] = useState<"all" | "liked" | "disliked">("all");
+
+  const fetchPosts = async () => {
+    let endpoint = "/api/posts";
+    if (showMode === "liked") endpoint = "/api/posts/slug/like";
+    if (showMode === "disliked") endpoint = "/api/posts/slug/dislike";
+
+    try {
+      const res = await fetch(endpoint, { credentials: "include" });
+      const data = await res.json();
+      setPosts(data.posts || []);
+    } catch (err) {
+      toast.error("Failed to fetch posts.");
+    }
+  };
 
   useEffect(() => {
-    fetch("/api/posts")
-      .then((res) => res.json())
-      .then((data) => setPosts(data.posts || []));
-
+    fetchPosts();
     fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => setCategories(data.categories || []));
-  }, []);
+  }, [showMode]);
 
   const handleEdit = (post) => {
     setEditingPostId(post._id);
@@ -106,11 +120,39 @@ export default function AllPosts() {
     }
   };
 
+  const getTitle = () => {
+    if (showMode === "liked") return "❤️ Liked Posts";
+    if (showMode === "disliked") return "👎 Disliked Posts";
+    return "📚 All Posts";
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 space-y-10">
+      {/* Filter Buttons */}
+      <div className="flex justify-end gap-2">
+        <Button
+          variant={showMode === "all" ? "default" : "outline"}
+          onClick={() => setShowMode("all")}
+        >
+          📚 All
+        </Button>
+        <Button
+          variant={showMode === "liked" ? "default" : "outline"}
+          onClick={() => setShowMode("liked")}
+        >
+          ❤️ Liked
+        </Button>
+        <Button
+          variant={showMode === "disliked" ? "default" : "outline"}
+          onClick={() => setShowMode("disliked")}
+        >
+          👎 Disliked
+        </Button>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">📚 All Posts</CardTitle>
+          <CardTitle className="text-xl font-semibold">{getTitle()}</CardTitle>
         </CardHeader>
         <CardContent>
           {posts.length === 0 ? (

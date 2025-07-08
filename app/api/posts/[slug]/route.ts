@@ -1,3 +1,4 @@
+// app/api/posts/[slug]/dislike/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Post from "@/models/Post";
