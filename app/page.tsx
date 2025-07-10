@@ -2,43 +2,57 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Heart, ThumbsDown, MessageSquare } from "lucide-react";
 import { PostWithAuthor, PostWithCategory } from "@/types/post";
-import { Heart, ThumbsDown } from "lucide-react";
+
+// Types
+interface Comment {
+  _id: string;
+  content: string;
+  author: {
+    _id: string;
+    username: string;
+  };
+  createdAt: string;
+}
 
 type PostType = PostWithAuthor &
   PostWithCategory & {
     liked: boolean;
+    disliked?: boolean;
+    dislikes?: number;
+    likes?: number;
     _id: string;
-    subcategory?: { name: string }; // ✅ subcategory field
+    subcategory?: { name: string };
   };
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [comments, setComments] = useState<Record<string, Comment[]>>({});
+  const [newComment, setNewComment] = useState<Record<string, string>>({});
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchPosts = async (pageNumber = 1): Promise<void> => {
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async (pageNumber = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/posts?page=${pageNumber}&status=published`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
+      const res = await fetch(`/api/posts?page=${pageNumber}&status=published`, {
+        credentials: "include",
+      });
       const data = await res.json();
+      const newPosts = data.posts || [];
 
-      if (pageNumber === 1) {
-        setPosts(data.posts || []);
-      } else {
-        setPosts((prev) => [...prev, ...(data.posts || [])]);
-      }
+      if (pageNumber === 1) setPosts(newPosts);
+      else setPosts((prev) => [...prev, ...newPosts]);
 
-      const totalPages: number = data?.pagination?.totalPages || 1;
-      setHasMore(pageNumber < totalPages);
+      setHasMore(pageNumber < (data.pagination?.totalPages || 1));
     } catch (err) {
       console.error("Failed to fetch posts", err);
     } finally {
@@ -46,180 +60,225 @@ export default function HomePage() {
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
   const loadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
     fetchPosts(nextPage);
   };
 
-  const handleLike = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-    slug: string
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const fetchComments = async (slug: string) => {
     try {
-      const res = await fetch(`/api/posts/${slug}/like`, {
-        method: "POST",
-        credentials: "include",
-      });
-
+      const res = await fetch(`/api/posts/${slug}/comments`, { credentials: "include" });
       const data = await res.json();
-
-      setPosts((prev) =>
-        prev.map((p) => {
-          if (p.slug === slug) {
-            return {
-              ...p,
-              likes: data.likes,
-              liked: data.liked,
-              // Reset dislike if now liked
-              dislikes: data.liked
-                ? Math.max((p.dislikes || 0) - 1, 0)
-                : p.dislikes,
-              disliked: data.liked ? false : p.disliked,
-            } as PostType;
-          }
-          return p;
-        })
-      );
+      setComments((prev) => ({ ...prev, [slug]: data.comments || [] }));
     } catch (err) {
-      console.error("Failed to like post:", err);
+      console.error("Failed to load comments", err);
     }
   };
 
-  const handleDislike = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-    slug: string
-  ) => {
+  const handleLike = async (e: any, slug: string) => {
     e.preventDefault();
-    e.stopPropagation();
+    const res = await fetch(`/api/posts/${slug}/like`, { method: "POST", credentials: "include" });
+    const data = await res.json();
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.slug === slug
+          ? {
+              ...p,
+              likes: data.likes,
+              liked: data.liked,
+              dislikes: data.disliked ? Math.max((p.dislikes || 0) - 1, 0) : p.dislikes,
+              disliked: data.disliked ? false : p.disliked,
+            }
+          : p
+      )
+    );
+  };
 
-    try {
-      const res = await fetch(`/api/posts/${slug}/dislike`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      setPosts((prev) =>
-        prev.map((p) => {
-          if (p.slug === slug) {
-            return {
+  const handleDislike = async (e: any, slug: string) => {
+    e.preventDefault();
+    const res = await fetch(`/api/posts/${slug}/dislike`, { method: "POST", credentials: "include" });
+    const data = await res.json();
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.slug === slug
+          ? {
               ...p,
               dislikes: data.dislikes,
               disliked: data.disliked,
-              // Reset like if now disliked
               likes: data.disliked ? Math.max((p.likes || 0) - 1, 0) : p.likes,
               liked: data.disliked ? false : p.liked,
-            } as PostType;
-          }
-          return p;
-        })
-      );
+            }
+          : p
+      )
+    );
+  };
+
+  const handleCommentSubmit = async (slug: string) => {
+    try {
+      const res = await fetch(`/api/posts/${slug}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content: newComment[slug] }),
+      });
+      const data = await res.json();
+      setNewComment((prev) => ({ ...prev, [slug]: "" }));
+      fetchComments(slug);
     } catch (err) {
-      console.error("Failed to dislike post:", err);
+      console.error("Failed to add comment", err);
+    }
+  };
+
+  const handleCommentDelete = async (slug: string, commentId: string) => {
+    try {
+      await fetch(`/api/posts/${slug}/comments`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ commentId }),
+      });
+      fetchComments(slug);
+    } catch (err) {
+      console.error("Failed to delete comment", err);
+    }
+  };
+
+  const handleCommentEdit = async (slug: string, commentId: string) => {
+    try {
+      await fetch(`/api/posts/${slug}/comments`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ commentId, content: editingContent }),
+      });
+      setEditingCommentId(null);
+      setEditingContent("");
+      fetchComments(slug);
+    } catch (err) {
+      console.error("Failed to edit comment", err);
     }
   };
 
   return (
     <main className="min-h-screen bg-white text-gray-900">
-      {/* Hero Section */}
       <section className="w-full bg-gradient-to-r from-gray-900 to-black text-white py-16 px-4 md:px-6">
         <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4">
-            Welcome to My Blog
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-            Discover powerful ideas, guides, and thought-provoking stories —
-            from creators to creators.
-          </p>
+          <h1 className="text-5xl font-bold mb-4">Welcome to My Blog</h1>
+          <p className="text-xl text-gray-300">Ideas, guides, and stories from creators to creators.</p>
         </div>
       </section>
 
-      {/* Posts Section */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <section className="max-w-6xl mx-auto px-4 py-12">
         {loading && posts.length === 0 ? (
-          <p className="text-center text-gray-400 text-lg">Loading posts...</p>
+          <p className="text-center">Loading posts...</p>
         ) : posts.length === 0 ? (
-          <p className="text-center text-gray-500 text-lg">
-            No posts yet. Come back later!
-          </p>
+          <p className="text-center">No posts yet. Come back later!</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {posts.map((post) => (
-              <div
-                key={post._id}
-                className="bg-white border border-gray-200 shadow-sm rounded-xl p-6 hover:shadow-md transition-all group"
-              >
-                <Link href={`/posts/${post.slug}`}>
-                  <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2 group-hover:underline">
-                    {post.title}
-                  </h3>
-                  <p
-                    className="text-gray-600 text-sm md:text-base mb-4 line-clamp-3"
-                    dangerouslySetInnerHTML={{
-                      __html: sanitizePreview(post.content),
-                    }}
-                  />
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>
-                      By{" "}
-                      {typeof post.author === "object" &&
-                      "username" in post.author
-                        ? post.author.username
-                        : "Unknown"}
-                    </span>
-                    <span className="italic">
-                      {typeof post.category === "object" &&
-                      "name" in post.category
-                        ? post.category.name
-                        : "Uncategorized"}
-                      {post.subcategory?.name
-                        ? ` → ${post.subcategory.name}`
-                        : ""}
-                    </span>
-                  </div>
-                </Link>
+          posts.map((post) => (
+            <div key={post._id} className="border rounded-lg p-6 mb-8">
+              <Link href={`/posts/${post.slug}`} className="block">
+                <h2 className="text-2xl font-semibold mb-2">{post.title}</h2>
+                <p className="text-sm text-gray-500 mb-2">
+                  By {post.author?.username || "Unknown"} · {post.category?.name}
+                  {post.subcategory?.name && ` → ${post.subcategory.name}`}
+                </p>
+                <p className="text-gray-600 mb-4">{sanitizePreview(post.content)}</p>
+              </Link>
 
-                <div className="flex justify-between items-center text-sm text-gray-500 mt-4 gap-3">
-                  {/* ❤️ Like */}
-                  <button
-                    onClick={(e) => handleLike(e, post.slug)}
-                    className={`flex items-center gap-1 px-3 py-1 rounded text-white text-sm transition-all
-                              ${post.liked ? "bg-red-600" : "bg-blue-600"}`}
-                  >
-                    <Heart size={16} className="shrink-0" />
-                    {post.likes || 0}
-                  </button>
-
-                  {/* 👎 Dislike */}
-                  <button
-                    onClick={(e) => handleDislike(e, post.slug)}
-                    className={`flex items-center gap-1 px-3 py-1 rounded text-white text-sm transition-all
-                              ${post.disliked ? "bg-gray-700" : "bg-gray-500"}`}
-                  >
-                    <ThumbsDown size={16} className="shrink-0" />
-                    {post.dislikes || 0}
-                  </button>
-                </div>
+              <div className="flex gap-4 mb-4">
+                <button
+                  onClick={(e) => handleLike(e, post.slug)}
+                  className={`px-3 py-1 rounded text-white ${post.liked ? "bg-red-600" : "bg-blue-600"}`}
+                >
+                  <Heart size={16} /> {post.likes || 0}
+                </button>
+                <button
+                  onClick={(e) => handleDislike(e, post.slug)}
+                  className={`px-3 py-1 rounded text-white ${post.disliked ? "bg-gray-700" : "bg-gray-500"}`}
+                >
+                  <ThumbsDown size={16} /> {post.dislikes || 0}
+                </button>
+                <button
+                  onClick={() => fetchComments(post.slug)}
+                  className="px-3 py-1 bg-green-600 text-white rounded"
+                >
+                  <MessageSquare size={16} /> View Comments
+                </button>
               </div>
-            ))}
-          </div>
+
+              {comments[post.slug] && (
+                <div className="space-y-2">
+                  {comments[post.slug].map((c) => (
+                    <div key={c._id} className="border p-2 rounded">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{c.author?.username}</span>
+                        <small className="text-gray-500">{new Date(c.createdAt).toLocaleString()}</small>
+                      </div>
+                      {editingCommentId === c._id ? (
+                        <div>
+                          <textarea
+                            value={editingContent}
+                            onChange={(e) => setEditingContent(e.target.value)}
+                            className="w-full border p-1 mt-1"
+                          />
+                          <button
+                            onClick={() => handleCommentEdit(post.slug, c._id)}
+                            className="mt-1 bg-blue-500 text-white px-2 py-1 rounded"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      ) : (
+                        <p>{c.content}</p>
+                      )}
+                      <div className="flex gap-2 mt-1">
+                        <button
+                          onClick={() => {
+                            setEditingCommentId(c._id);
+                            setEditingContent(c.content);
+                          }}
+                          className="text-sm text-blue-500"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleCommentDelete(post.slug, c._id)}
+                          className="text-sm text-red-500"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4">
+                <textarea
+                  value={newComment[post.slug] || ""}
+                  onChange={(e) =>
+                    setNewComment((prev) => ({ ...prev, [post.slug]: e.target.value }))
+                  }
+                  placeholder="Write a comment..."
+                  className="w-full border p-2 rounded"
+                />
+                <button
+                  onClick={() => handleCommentSubmit(post.slug)}
+                  className="mt-2 bg-black text-white px-4 py-1 rounded"
+                >
+                  Comment
+                </button>
+              </div>
+            </div>
+          ))
         )}
 
-        {/* Load More Button */}
         {hasMore && !loading && (
-          <div className="mt-10 text-center">
+          <div className="text-center mt-10">
             <button
               onClick={loadMore}
-              className="px-6 py-2 text-white bg-gray-800 rounded hover:bg-black transition-all"
+              className="px-6 py-2 text-white bg-gray-800 rounded hover:bg-black"
             >
               Load More
             </button>
@@ -230,8 +289,7 @@ export default function HomePage() {
   );
 }
 
-// ✨ Sanitize content preview (strip HTML tags, limit length)
 function sanitizePreview(html: string): string {
-  const textOnly = html.replace(/<[^>]+>/g, ""); // remove tags
+  const textOnly = html.replace(/<[^>]+>/g, "");
   return textOnly.length > 180 ? textOnly.slice(0, 180) + "..." : textOnly;
 }
