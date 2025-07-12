@@ -7,10 +7,10 @@ import { getUserFromRequest } from "@/middleware/auth";
 // 🟢 GET: Fetch comments for a post
 export async function GET(
   req: NextRequest,
-  context: { params: { slug: string } }
+  { params }: { params: { slug: string } }
 ) {
   await dbConnect();
-  const { slug } = context.params;
+  const { slug } = params;
 
   try {
     const post = await Post.findOne({ slug }).populate(
@@ -32,15 +32,16 @@ export async function GET(
 // 🟡 POST: Add a new comment
 export async function POST(
   req: NextRequest,
-  context: { params: { slug: string } }
+  { params }: { params: { slug: string } }
 ) {
   await dbConnect();
+
   const user = await getUserFromRequest(req);
   if (!user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { slug } = context.params;
+  const { slug } = params;
   const { text } = await req.json();
 
   if (!text?.trim()) {
@@ -62,6 +63,7 @@ export async function POST(
     });
 
     await post.save();
+
     return NextResponse.json({ message: "Comment added successfully" });
   } catch (err) {
     console.error("POST /comments error:", err);
@@ -72,7 +74,7 @@ export async function POST(
 // 🔵 PUT: Update a comment
 export async function PUT(
   req: NextRequest,
-  context: { params: { slug: string } }
+  { params }: { params: { slug: string } }
 ) {
   await dbConnect();
   const user = await getUserFromRequest(req);
@@ -80,7 +82,7 @@ export async function PUT(
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { slug } = context.params;
+  const { slug } = params;
   const { commentId, text } = await req.json();
 
   if (!commentId || !text?.trim()) {
@@ -121,10 +123,10 @@ export async function PUT(
   }
 }
 
-// 🔴 DELETE: Remove a comment
+// delete: Delete a comment
 export async function DELETE(
   req: NextRequest,
-  context: { params: { slug: string } }
+  { params }: { params: { slug: string } }
 ) {
   await dbConnect();
   const user = await getUserFromRequest(req);
@@ -132,7 +134,7 @@ export async function DELETE(
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const { slug } = context.params;
+  const { slug } = params;
   const { commentId } = await req.json();
 
   if (!commentId) {
