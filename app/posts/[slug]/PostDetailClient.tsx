@@ -2,20 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
-import { PostWithAuthor, PostWithCategory } from "@/types/post";
+import { Post } from "@/types/post";
 
-type FullPost = PostWithAuthor & PostWithCategory & {
-  _id: string;
-  content: string;
-  views: number;
-  likes: number;
-  liked: boolean;
-  createdAt: string;
-  subcategory?: { name: string };
-};
+
 
 export default function PostDetailClient({ slug }: { slug: string }) {
-  const [post, setPost] = useState<FullPost | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
 
   const decodedSlug = decodeURIComponent(slug);
@@ -92,7 +84,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             {post.category?.name || "Uncategorized"}
             {post.subcategory?.name ? ` → ${post.subcategory.name}` : ""}
           </span>{" "}
-          · {new Date(post.createdAt).toLocaleDateString()}
+          · {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : "Unknown date"}
         </div>
 
         <div
