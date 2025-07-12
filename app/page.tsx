@@ -8,7 +8,7 @@ import { PostWithAuthor, PostWithCategory } from "@/types/post";
 // Types
 interface Comment {
   _id: string;
-  content: string;
+  text: string;
   author: {
     _id: string;
     username: string;
@@ -120,7 +120,7 @@ export default function HomePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ content: newComment[slug] }),
+        body: JSON.stringify({ text: newComment[slug] }),
       });
       const data = await res.json();
       setNewComment((prev) => ({ ...prev, [slug]: "" }));
@@ -150,7 +150,7 @@ export default function HomePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ commentId, content: editingContent }),
+        body: JSON.stringify({ commentId, text: editingContent }),
       });
       setEditingCommentId(null);
       setEditingContent("");
@@ -230,13 +230,13 @@ export default function HomePage() {
                           </button>
                         </div>
                       ) : (
-                        <p>{c.content}</p>
+                        <p>{c.text}</p>
                       )}
                       <div className="flex gap-2 mt-1">
                         <button
                           onClick={() => {
                             setEditingCommentId(c._id);
-                            setEditingContent(c.content);
+                            setEditingContent(c.text);
                           }}
                           className="text-sm text-blue-500"
                         >
