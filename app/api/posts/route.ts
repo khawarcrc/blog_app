@@ -17,7 +17,7 @@ function generateUniqueSlug(title: string): string {
   return `${base}-${suffix}`;
 }
 
-// ✅ GET: Fetch posts
+//  GET: Fetch posts
 export async function GET(req: Request) {
   try {
     await dbConnect();
@@ -105,7 +105,7 @@ export async function GET(req: Request) {
   }
 }
 
-// ✅ POST: Create post
+//  POST: Create post
 export async function POST(req: Request) {
   try {
     await dbConnect();
@@ -190,7 +190,7 @@ export async function POST(req: Request) {
   }
 }
 
-// ✅ PUT: Update post
+//  PUT: Update post
 export async function PUT(req: Request) {
   try {
     await dbConnect();
@@ -254,7 +254,7 @@ export async function PUT(req: Request) {
   }
 }
 
-// ✅ DELETE: Remove post
+//  DELETE: Remove post
 export async function DELETE(req: Request) {
   try {
     await dbConnect();

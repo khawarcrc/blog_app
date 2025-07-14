@@ -8,7 +8,7 @@ export default function Header() {
   const router = useRouter();
   const [user, setUser] = useState(null);
 
-  // ✅ Check login status using cookie-based token
+  //  Check login status using cookie-based token
   useEffect(() => {
     const checkLogin = async () => {
       try {

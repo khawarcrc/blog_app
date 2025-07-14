@@ -2,7 +2,7 @@ export async function getPostBySlug(slug: string) {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/posts?slug=${slug}`, {
       cache: "no-store",
-      credentials: "include", // ✅ Important if you're using auth cookies
+      credentials: "include", // Important if you're using auth cookies
     });
 
     if (!res.ok) {

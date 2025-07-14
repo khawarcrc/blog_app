@@ -18,7 +18,7 @@ const commentSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { _id: true } // Give each comment a unique _id for update/delete
+  { _id: true }
 );
 
 // Extend Post schema
@@ -54,11 +54,12 @@ const PostSchema = new mongoose.Schema(
     tags: [{ type: String }],
     featured: { type: Boolean, default: false },
 
-    // ✅ Add comments array
+    //  Add comments array
     comments: [commentSchema],
   },
   { timestamps: true }
 );
+
 
 // Indexes
 PostSchema.index({ title: "text", content: "text" });

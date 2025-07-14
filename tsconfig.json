@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
 
-    // ✅ Path alias support
+    //  Path alias support
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
