@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     { expiresIn: "1d" }
   );
 
-  // ✅ Properly set cookie in response headers
+  //  Properly set cookie in response headers
   const response = NextResponse.json({
     message: "Login successful",
     user: { username: user.username, role: user.role },
