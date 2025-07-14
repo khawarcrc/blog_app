@@ -36,29 +36,38 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-[90vh] items-center justify-center
-      dark:from-gray-900 dark:via-gray-800 dark:to-black px-4">
+    <main
+      className="flex min-h-[90vh] items-center justify-center
+      dark:from-gray-900 dark:via-gray-800 dark:to-black px-4"
+    >
       <Card className="w-full max-w-md shadow-xl">
-        <CardHeader>
+        <CardHeader className="">
           <CardTitle className="text-2xl text-center">
             Login to Your Account
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="">
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="">
+                Username
+              </Label>
               <Input
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="yourname"
                 required
+                type="text"
+                className=""
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="">
+                Password
+              </Label>
               <Input
+                className=""
                 id="password"
                 type="password"
                 value={password}
@@ -67,7 +76,12 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full"
+              variant="default"
+              size="default"
+            >
               Login
             </Button>
           </form>
