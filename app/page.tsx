@@ -2,9 +2,7 @@
 
 import { useEffect, useState, MouseEvent } from "react";
 import Link from "next/link";
-import { Heart, ThumbsDown, MessageSquare } from "lucide-react";
-
-// ⬇ Import all types from central index
+import { Heart, ThumbsDown, MessageSquare, Eye } from "lucide-react";
 import { Comment, Post } from "@/types/index";
 
 export default function HomePage() {
@@ -36,12 +34,33 @@ export default function HomePage() {
       if (pageNumber === 1) setPosts(newPosts);
       else setPosts((prev) => [...prev, ...newPosts]);
 
+      // 🔄 Track views on each newly fetched post
+      newPosts.forEach((post) => {
+        trackPostView(post.slug);
+      });
+
       setHasMore(pageNumber < (data.pagination?.totalPages || 1));
     } catch (err) {
       console.error("Failed to fetch posts", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const trackPostView = (slug: string) => {
+    const viewedKey = `viewed-${slug}`;
+    if (sessionStorage.getItem(viewedKey)) return;
+
+    fetch(`/api/posts/${slug}/views`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(() => {
+        sessionStorage.setItem(viewedKey, "true");
+      })
+      .catch((err) => {
+        console.error(`Failed to track view for ${slug}`, err);
+      });
   };
 
   const loadMore = () => {
@@ -56,8 +75,7 @@ export default function HomePage() {
         credentials: "include",
       });
       const data = await res.json();
-      const fetchedComments: Comment[] = data.comments || [];
-      setComments((prev) => ({ ...prev, [slug]: fetchedComments }));
+      setComments((prev) => ({ ...prev, [slug]: data.comments || [] }));
     } catch (err) {
       console.error("Failed to load comments", err);
     }
@@ -71,19 +89,19 @@ export default function HomePage() {
     });
     const data = await res.json();
     setPosts((prev) =>
-      prev.map((p) => {
-        if (p.slug !== slug) return p;
-
-        return {
-          ...p,
-          likes: data.likes,
-          liked: data.liked,
-          dislikes: data.disliked
-            ? Math.max((p.dislikes || 0) - 1, 0)
-            : p.dislikes,
-          disliked: data.disliked ? false : p.disliked,
-        };
-      })
+      prev.map((p) =>
+        p.slug === slug
+          ? {
+              ...p,
+              likes: data.likes,
+              liked: data.liked,
+              dislikes: data.disliked
+                ? Math.max((p.dislikes || 0) - 1, 0)
+                : p.dislikes,
+              disliked: data.disliked ? false : p.disliked,
+            }
+          : p
+      )
     );
   };
 
@@ -111,13 +129,12 @@ export default function HomePage() {
 
   const handleCommentSubmit = async (slug: string) => {
     try {
-      const res = await fetch(`/api/posts/${slug}/comments`, {
+      await fetch(`/api/posts/${slug}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ text: newComment[slug] }),
       });
-      await res.json();
       setNewComment((prev) => ({ ...prev, [slug]: "" }));
       fetchComments(slug);
     } catch (err) {
@@ -216,6 +233,11 @@ export default function HomePage() {
                   >
                     <MessageSquare size={16} /> View Comments
                   </button>
+
+                  <div className="flex items-center gap-1 text-gray-600 ml-auto">
+                    <Eye size={16} />
+                    <span className="text-sm">{post.views || 0}</span>
+                  </div>
                 </div>
 
                 {comments[post.slug] && (
