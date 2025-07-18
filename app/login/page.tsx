@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useUserStore } from '@/store/useUserStore';
 
 export default function LoginPage() {
+  const { setUser } = useUserStore();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function LoginPage() {
     const data = await res.json();
 
     if (res.ok) {
+       setUser(data.user); 
       toast.success("Login successful");
       if (data.user.role === "admin" || data.user.role === "superadmin") {
         router.push("/dashboard");

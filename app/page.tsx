@@ -34,10 +34,7 @@ export default function HomePage() {
       if (pageNumber === 1) setPosts(newPosts);
       else setPosts((prev) => [...prev, ...newPosts]);
 
-      // 🔄 Track views on each newly fetched post
-      newPosts.forEach((post) => {
-        trackPostView(post.slug);
-      });
+      
 
       setHasMore(pageNumber < (data.pagination?.totalPages || 1));
     } catch (err) {
@@ -47,21 +44,7 @@ export default function HomePage() {
     }
   };
 
-  const trackPostView = (slug: string) => {
-    const viewedKey = `viewed-${slug}`;
-    if (sessionStorage.getItem(viewedKey)) return;
-
-    fetch(`/api/posts/${slug}/views`, {
-      method: "POST",
-      credentials: "include",
-    })
-      .then(() => {
-        sessionStorage.setItem(viewedKey, "true");
-      })
-      .catch((err) => {
-        console.error(`Failed to track view for ${slug}`, err);
-      });
-  };
+  
 
   const loadMore = () => {
     const nextPage = page + 1;
