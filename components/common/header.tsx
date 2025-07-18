@@ -2,33 +2,16 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useUserStore } from '@/store/useUserStore';
 
 export default function Header() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const { user, setUser, fetchUser } = useUserStore();
 
-  //  Check login status using cookie-based token
   useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        const res = await fetch('/api/auth/me', {
-          credentials: 'include', // ensures cookie is sent
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user); // assume your API returns { user }
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        setUser(null);
-      }
-    };
-
-    checkLogin();
-  }, []);
+    fetchUser(); // checks login status on mount
+  }, [fetchUser]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', {

@@ -1,11 +1,8 @@
-// posts/slug/PostDetailClient.tsx
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { Post } from "@/types/post";
-
-
 
 export default function PostDetailClient({ slug }: { slug: string }) {
   const [post, setPost] = useState<Post | null>(null);
@@ -13,6 +10,7 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
   const decodedSlug = decodeURIComponent(slug);
 
+  // ⬇ Fetch the post content
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -34,6 +32,46 @@ export default function PostDetailClient({ slug }: { slug: string }) {
 
     fetchPost();
   }, [decodedSlug]);
+
+  //  Log the view when the page is visited
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const res = await fetch(`/api/posts?slug=${decodedSlug}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setPost(data.post);
+          trackPostView(data.post.slug); //  Count view after successful load
+        } else {
+          console.error(data.error || "Failed to load post");
+        }
+      } catch (error) {
+        console.error("Error fetching post:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [decodedSlug]);
+
+  const trackPostView = (slug: string) => {
+    const viewedKey = `viewed-${slug}`;
+    if (sessionStorage.getItem(viewedKey)) return;
+
+    fetch(`/api/posts/${slug}/views`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(() => {
+        sessionStorage.setItem(viewedKey, "true");
+      })
+      .catch((err) => {
+        console.error(`Failed to track view for ${slug}`, err);
+      });
+  };
 
   const handleLike = async () => {
     if (!post) return;
@@ -85,7 +123,10 @@ export default function PostDetailClient({ slug }: { slug: string }) {
             {post.category?.name || "Uncategorized"}
             {post.subcategory?.name ? ` → ${post.subcategory.name}` : ""}
           </span>{" "}
-          · {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : "Unknown date"}
+          ·{" "}
+          {post.createdAt
+            ? new Date(post.createdAt).toLocaleDateString()
+            : "Unknown date"}
         </div>
 
         <div
