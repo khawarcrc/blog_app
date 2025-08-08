@@ -166,7 +166,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 py-12">
+      <section className="max-w-7xl mx-auto px-4 py-12">
         {loading && posts.length === 0 ? (
           <p className="text-center">Loading posts...</p>
         ) : posts.length === 0 ? (
