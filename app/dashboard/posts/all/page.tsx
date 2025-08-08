@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function AllPosts() {
   const [posts, setPosts] = useState([]);
@@ -17,8 +23,11 @@ export default function AllPosts() {
   const [editingStatus, setEditingStatus] = useState("draft");
   const [editingContent, setEditingContent] = useState("");
 
-  // showMode: "all" | "liked" | "disliked"
   const [showMode, setShowMode] = useState<"all" | "liked" | "disliked">("all");
+
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsSlug, setAnalyticsSlug] = useState("");
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
   const fetchPosts = async () => {
     let endpoint = "/api/posts";
@@ -126,8 +135,27 @@ export default function AllPosts() {
     return "📚 All Posts";
   };
 
+  const handleAnalytics = async (slug: string) => {
+    try {
+      const res = await fetch(`/api/posts/${slug}/analytics`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setAnalyticsSlug(slug);
+        setAnalyticsData(data);
+        setAnalyticsOpen(true);
+      } else {
+        toast.error(data.error || "Failed to fetch analytics");
+      }
+    } catch (err) {
+      toast.error("Something went wrong while fetching analytics");
+    }
+  };
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 space-y-10">
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-10">
       {/* Filter Buttons */}
       <div className="flex justify-end gap-2">
         <Button
@@ -165,6 +193,7 @@ export default function AllPosts() {
                     <th className="p-3 font-medium">Title</th>
                     <th className="p-3 font-medium">Category / Subcategory</th>
                     <th className="p-3 font-medium">Status</th>
+                    <th className="p-3 font-medium">Analytics</th>
                     <th className="p-3 font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -207,7 +236,9 @@ export default function AllPosts() {
                                   }
                                   className="mt-2 w-full border rounded px-2 py-1"
                                 >
-                                  <option value="">-- Select Subcategory --</option>
+                                  <option value="">
+                                    -- Select Subcategory --
+                                  </option>
                                   {categories
                                     .find(
                                       (cat) =>
@@ -225,14 +256,15 @@ export default function AllPosts() {
                           <td className="p-3">
                             <select
                               value={editingStatus}
-                              onChange={(e) =>
-                                setEditingStatus(e.target.value)
-                              }
+                              onChange={(e) => setEditingStatus(e.target.value)}
                               className="border rounded px-2 py-1 w-full"
                             >
                               <option value="draft">Draft</option>
                               <option value="published">Published</option>
                             </select>
+                          </td>
+                          <td className="p-3 text-muted-foreground">
+                            Editing...
                           </td>
                           <td className="p-3 space-x-2">
                             <Button
@@ -280,6 +312,15 @@ export default function AllPosts() {
                               {post.status}
                             </span>
                           </td>
+                          <td className="p-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAnalytics(post.slug)}
+                            >
+                              📊 View
+                            </Button>
+                          </td>
                           <td className="p-3 space-x-2">
                             <Button
                               size="sm"
@@ -306,6 +347,83 @@ export default function AllPosts() {
           )}
         </CardContent>
       </Card>
+
+      {/* Analytics Modal */}
+      <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
+        <DialogContent className="!max-w-[1600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              📊 Analytics for:{" "}
+              <span className="text-primary font-semibold">
+                {analyticsSlug}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {analyticsData ? (
+            <div className="space-y-6">
+              <div className="text-base font-medium text-muted-foreground">
+                👁️ Total Views:{" "}
+                <span className="text-foreground font-semibold">
+                  {analyticsData.views}
+                </span>
+              </div>
+
+              {/* Table-like container */}
+              <div className="w-full border rounded-lg overflow-x-auto">
+                {/* Header row */}
+                <div className="grid grid-cols-6 gap-4 bg-muted px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b">
+                  <div>User</div>
+                  <div>IP</div>
+                  <div>Device</div>
+                  <div>Location</div>
+                  <div>Referer</div>
+                  <div>Viewed At</div>
+                </div>
+
+                {/* Body rows */}
+                {analyticsData.viewDetails.map((view, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-6 gap-4 items-center px-4 py-3 border-b hover:bg-accent transition-colors text-sm"
+                  >
+                    <div className="truncate">
+                      {view.userId || (
+                        <span className="italic text-muted-foreground">
+                          Anonymous
+                        </span>
+                      )}
+                    </div>
+                    <div className="truncate">{view.ip}</div>
+                    <div className="truncate">
+                      {view.device || "N/A"}{" "}
+                      <span className="block text-xs text-muted-foreground">
+                        {view.browser}
+                      </span>
+                    </div>
+                    <div className="truncate">
+                      🌍 {view.country || "?"}, 🗺️ {view.region || "?"}, 🏙️{" "}
+                      {view.city || "?"}
+                    </div>
+                    <div className="truncate">
+                      {view.referer || (
+                        <span className="text-muted-foreground">Direct</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(view.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Loading analytics...
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
